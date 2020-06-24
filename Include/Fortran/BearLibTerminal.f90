@@ -1,5 +1,6 @@
 module BearLibTerminal
-
+    use iso_c_binding
+    
     ! May the lord forigve me for the following variable spam :pray:
     integer, parameter :: TK_A = X'04' &
                         , TK_B = X'05' &
@@ -144,6 +145,7 @@ module BearLibTerminal
         ! Open & Close
         subroutine terminal_open() bind(C, name='terminal_open')
         end subroutine
+
         subroutine terminal_close() bind(C, name='terminal_close')
         end subroutine
 
@@ -168,13 +170,16 @@ module BearLibTerminal
         ! Refresh
         subroutine terminal_refresh() bind(C, name='terminal_refresh')
         end subroutine
+
         ! DRAWING FUNCTIONS !
         subroutine terminal_clear() bind(C, name='terminal_clear')
         end subroutine
+
         subroutine terminal_clear_area(x_pos, y_pos, width, height) bind(C, name='terminal_clear_area')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, width, height
         end subroutine
+
         subroutine terminal_crop(x_pos, y_pos, width, height) bind(C, name='terminal_crop')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, width, height
@@ -185,6 +190,7 @@ module BearLibTerminal
             use iso_c_binding
             integer (c_int), value :: color
         end subroutine
+
         subroutine terminal_bkcolor(color) bind(C, name='terminal_bkcolor')
             use iso_c_binding
             integer (c_int), value :: color
@@ -194,6 +200,7 @@ module BearLibTerminal
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, char_code
         end subroutine
+
         subroutine terminal_put_ext(x_pos, y_pos, dx, dy, char_code, corners) bind(C, name='terminal_put_ext')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, dx, dy, char_code
@@ -211,6 +218,7 @@ module BearLibTerminal
         integer(c_int) function terminal_read() bind(C, name='terminal_read')
             use iso_c_binding
         end function
+
         integer(c_int) function terminal_peek() bind(C, name='terminal_peek')
             use iso_c_binding
         end function
@@ -239,14 +247,44 @@ module BearLibTerminal
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
+
         integer(c_int) function terminal_pick_color(x_pos, y_pos, index) bind(C, name='terminal_pick_color')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
+
         integer(c_int) function terminal_pick_bkcolor(x_pos, y_pos, index) bind(C, name='terminal_pick_bkcolor')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
+        ! Tools !
+
+        subroutine terminal_delay(period) bind(C, name='terminal_delay')
+            use iso_c_binding
+            integer (c_int), value :: period
+        end subroutine
+
+        integer(c_int) function color_from_name(name) bind(C, name='color_from_name8')
+            use iso_c_binding
+            character (c_char), intent(in) :: name
+        end function
+
+        integer(c_int) function color_from_argb(alpha, red, green, blue) bind(C, name='color_from_argb')
+            use iso_c_binding
+            integer (c_int), value :: alpha, red, green, blue
+        end function
+
     end interface
+
+contains
+    subroutine terminal_print(x_pos, y_pos, strn)
+        use iso_c_binding
+        integer(c_int), value :: x_pos, y_pos
+        character(c_char), intent(in) :: strn
+        integer(c_int) :: ret_width = 0, ret_height = 0
+        call terminal_print_ext(x_pos, y_pos, 0, 0, TK_ALIGN_DEFAULT, strn, ret_width, ret_height)
+    end subroutine
 end module BearLibTerminal
+
+
