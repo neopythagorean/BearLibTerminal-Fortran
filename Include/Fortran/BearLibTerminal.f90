@@ -167,6 +167,11 @@ module BearLibTerminal
             integer (c_int), value :: layer
         end subroutine
 
+        subroutine terminal_font(font_name) bind(C, name='terminal_font8')
+            use iso_c_binding
+            character (c_char), intent(in) :: font_name
+        end subroutine
+
         ! Refresh
         subroutine terminal_refresh() bind(C, name='terminal_refresh')
         end subroutine
@@ -188,12 +193,12 @@ module BearLibTerminal
         ! Colors
         subroutine terminal_color(color) bind(C, name='terminal_color')
             use iso_c_binding
-            integer (c_int), value :: color
+            integer*16, value :: color
         end subroutine
 
         subroutine terminal_bkcolor(color) bind(C, name='terminal_bkcolor')
             use iso_c_binding
-            integer (c_int), value :: color
+            integer*16, value :: color
         end subroutine
 
         subroutine terminal_put(x_pos, y_pos, char_code) bind(C, name='terminal_put')
@@ -204,7 +209,7 @@ module BearLibTerminal
         subroutine terminal_put_ext(x_pos, y_pos, dx, dy, char_code, corners) bind(C, name='terminal_put_ext')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, dx, dy, char_code
-            integer (c_int) :: corners
+            integer*16 :: corners
         end subroutine
 
         subroutine terminal_print_ext(x_pos, y_pos, width, height, align, strn, out_w, out_h) bind(C, name='terminal_print_ext8')
@@ -248,12 +253,12 @@ module BearLibTerminal
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
-        integer(c_int) function terminal_pick_color(x_pos, y_pos, index) bind(C, name='terminal_pick_color')
+        integer*16 function terminal_pick_color(x_pos, y_pos, index) bind(C, name='terminal_pick_color')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
-        integer(c_int) function terminal_pick_bkcolor(x_pos, y_pos, index) bind(C, name='terminal_pick_bkcolor')
+        integer*16 function terminal_pick_bkcolor(x_pos, y_pos, index) bind(C, name='terminal_pick_bkcolor')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
@@ -265,12 +270,12 @@ module BearLibTerminal
             integer (c_int), value :: period
         end subroutine
 
-        integer(c_int) function color_from_name(name) bind(C, name='color_from_name8')
+        integer*16 function color_from_name(name) bind(C, name='color_from_name8')
             use iso_c_binding
             character (c_char), intent(in) :: name
         end function
 
-        integer(c_int) function color_from_argb(alpha, red, green, blue) bind(C, name='color_from_argb')
+        integer*16 function color_from_argb(alpha, red, green, blue) bind(C, name='color_from_argb')
             use iso_c_binding
             integer (c_int), value :: alpha, red, green, blue
         end function
@@ -278,13 +283,15 @@ module BearLibTerminal
     end interface
 
 contains
+    ! This calls the raw terminal print
     subroutine terminal_print(x_pos, y_pos, strn)
         use iso_c_binding
         integer(c_int), value :: x_pos, y_pos
-        character(c_char), intent(in) :: strn
+        character*(*), intent(in) :: strn
         integer(c_int) :: ret_width = 0, ret_height = 0
-        call terminal_print_ext(x_pos, y_pos, 0, 0, TK_ALIGN_DEFAULT, strn, ret_width, ret_height)
+        call terminal_print_ext(x_pos, y_pos, 0, 0, TK_ALIGN_DEFAULT, TRIM(strn)//CHAR(0), ret_width, ret_height)
     end subroutine
+
 end module BearLibTerminal
 
 
