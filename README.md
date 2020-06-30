@@ -25,7 +25,11 @@ call terminal_print(0, 0, "Hello, world!"//CHAR(0))
 
 * Non-ASCII Character / Wide Character Support
 
-This binding does not currently support non-ascii characters.
+This binding does not currently support non-ascii characters in some subroutines and functions, like `terminal_print()`. You will have to use `terminal_put()` for unicode characters, like so:
+
+```fortran
+call terminal_put(0, 0, INT(X'2661'))
+```
 
 * Formatted Print
 

@@ -190,17 +190,6 @@ module BearLibTerminal
             integer (c_int), value :: x_pos, y_pos, width, height
         end subroutine
 
-        ! Colors
-        subroutine terminal_color(color) bind(C, name='terminal_color')
-            use iso_c_binding
-            integer*16, value :: color
-        end subroutine
-
-        subroutine terminal_bkcolor(color) bind(C, name='terminal_bkcolor')
-            use iso_c_binding
-            integer*16, value :: color
-        end subroutine
-
         subroutine terminal_put(x_pos, y_pos, char_code) bind(C, name='terminal_put')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, char_code
@@ -209,7 +198,7 @@ module BearLibTerminal
         subroutine terminal_put_ext(x_pos, y_pos, dx, dy, char_code, corners) bind(C, name='terminal_put_ext')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, dx, dy, char_code
-            integer*16 :: corners
+            integer(8) :: corners
         end subroutine
 
         subroutine terminal_print_ext(x_pos, y_pos, width, height, align, strn, out_w, out_h) bind(C, name='terminal_print_ext8')
@@ -217,6 +206,23 @@ module BearLibTerminal
             integer (c_int), value :: x_pos, y_pos, width, height, align
             character (c_char), intent(in) :: strn
             integer (c_int), intent(inout) :: out_w, out_h
+        end subroutine
+
+        ! Colors
+
+        ! Q: Why are colors 64bit ints when BLT only uses 32bit ints?
+        ! A: Because X'FFFFFFFF' is read as an integer 16 by Gfortran.
+        ! If you try to INT(X'FFFFFFFF') this, it will say that this
+        ! couldn't possibly fit as a 4 byte integer. So I've made these
+        ! 64bit ints to simplify setting colors.
+        subroutine terminal_color(color) bind(C, name='terminal_color')
+            use iso_c_binding
+            integer(8), value :: color
+        end subroutine
+
+        subroutine terminal_bkcolor(color) bind(C, name='terminal_bkcolor')
+            use iso_c_binding
+            integer(8), value :: color
         end subroutine
 
         ! INPUT FUNCTIONS !
@@ -253,12 +259,12 @@ module BearLibTerminal
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
-        integer*16 function terminal_pick_color(x_pos, y_pos, index) bind(C, name='terminal_pick_color')
+        integer(8) function terminal_pick_color(x_pos, y_pos, index) bind(C, name='terminal_pick_color')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
-        integer*16 function terminal_pick_bkcolor(x_pos, y_pos, index) bind(C, name='terminal_pick_bkcolor')
+        integer(8) function terminal_pick_bkcolor(x_pos, y_pos, index) bind(C, name='terminal_pick_bkcolor')
             use iso_c_binding
             integer (c_int), value :: x_pos, y_pos, index
         end function
@@ -270,20 +276,17 @@ module BearLibTerminal
             integer (c_int), value :: period
         end subroutine
 
-        integer*16 function color_from_name(name) bind(C, name='color_from_name8')
+        integer(8) function color_from_name(name) bind(C, name='color_from_name8')
             use iso_c_binding
             character (c_char), intent(in) :: name
-        end function
-
-        integer*16 function color_from_argb(alpha, red, green, blue) bind(C, name='color_from_argb')
-            use iso_c_binding
-            integer (c_int), value :: alpha, red, green, blue
         end function
 
     end interface
 
 contains
     ! This calls the raw terminal print
+    ! If you don't want the wrapper to automatically format your strings
+    ! for you by trimming & appening null, use terminal_print_ext instead.
     subroutine terminal_print(x_pos, y_pos, strn)
         use iso_c_binding
         integer(c_int), value :: x_pos, y_pos
@@ -291,6 +294,23 @@ contains
         integer(c_int) :: ret_width = 0, ret_height = 0
         call terminal_print_ext(x_pos, y_pos, 0, 0, TK_ALIGN_DEFAULT, TRIM(strn)//CHAR(0), ret_width, ret_height)
     end subroutine
+
+    ! This overloads BLT's color_from_argb,
+    ! this is because BLT's color_from_argb requires unsigned 8bit ints.
+    ! Fortran (at least gfortran) does not support unsigned ints.
+    ! ifort might. I don't know.
+    integer(8) function color_from_argb(alpha, red, green, blue) result(out_color)
+        implicit none
+        integer :: alpha, red, green, blue
+        out_color = 0
+        out_color = out_color + alpha
+        out_color = ISHFT(out_color, 8)
+        out_color = out_color + red
+        out_color = ISHFT(out_color, 8)
+        out_color = out_color + green
+        out_color = ISHFT(out_color, 8)
+        out_color = out_color + blue
+    end function
 
 end module BearLibTerminal
 
