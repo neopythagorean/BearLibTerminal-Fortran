@@ -152,23 +152,27 @@ module BearLibTerminal
         ! Terminal set
         ! BLT has many different 'terminal_set's. the regular one
         ! does not work, thus this is bound to set8.
-        subroutine terminal_set(setting) bind(C, name='terminal_set8')
+        subroutine terminal_set_raw(setting) bind(C, name='terminal_set8')
             use iso_c_binding
+            implicit none
             character(c_char), intent(in) :: setting
         end subroutine
 
-        subroutine terminal_compostion(comp) bind(C, name='terminal_composition')
+        subroutine terminal_composition(comp) bind(C, name='terminal_composition')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: comp
         end subroutine
 
         subroutine terminal_layer(layer) bind(C, name='terminal_layer')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: layer
         end subroutine
 
         subroutine terminal_font(font_name) bind(C, name='terminal_font8')
             use iso_c_binding
+            implicit none
             character (c_char), intent(in) :: font_name
         end subroutine
 
@@ -182,27 +186,32 @@ module BearLibTerminal
 
         subroutine terminal_clear_area(x_pos, y_pos, width, height) bind(C, name='terminal_clear_area')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, width, height
         end subroutine
 
         subroutine terminal_crop(x_pos, y_pos, width, height) bind(C, name='terminal_crop')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, width, height
         end subroutine
 
         subroutine terminal_put(x_pos, y_pos, char_code) bind(C, name='terminal_put')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, char_code
         end subroutine
 
         subroutine terminal_put_ext(x_pos, y_pos, dx, dy, char_code, corners) bind(C, name='terminal_put_ext')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, dx, dy, char_code
-            integer(8) :: corners
+            integer(4), dimension(4) :: corners
         end subroutine
 
         subroutine terminal_print_ext(x_pos, y_pos, width, height, align, strn, out_w, out_h) bind(C, name='terminal_print_ext8')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, width, height, align
             character (c_char), intent(in) :: strn
             integer (c_int), intent(inout) :: out_w, out_h
@@ -217,11 +226,13 @@ module BearLibTerminal
         ! 64bit ints to simplify setting colors.
         subroutine terminal_color(color) bind(C, name='terminal_color')
             use iso_c_binding
+            implicit none
             integer(8), value :: color
         end subroutine
 
         subroutine terminal_bkcolor(color) bind(C, name='terminal_bkcolor')
             use iso_c_binding
+            implicit none
             integer(8), value :: color
         end subroutine
 
@@ -236,36 +247,42 @@ module BearLibTerminal
 
         integer(c_int) function terminal_state(slot) bind(C, name='terminal_state')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: slot
         end function
 
         integer(c_int) function terminal_check(slot) bind(C, name='terminal_check')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: slot
         end function
 
-        integer(c_int) function terminal_has_input() bind(C, name='terminal_has_input')
+        logical function terminal_has_input() bind(C, name='terminal_has_input')
             use iso_c_binding
         end function
 
         integer(c_int) function terminal_read_str(x_pos, y_pos, buffer, max) bind(C, name='terminal_read_str8')
             use iso_c_binding
+            implicit none
             integer(c_int), value :: x_pos, y_pos, max
             character(c_char), intent(inout) :: buffer
         end function
 
         integer(c_int) function terminal_pick(x_pos, y_pos, index) bind(C, name='terminal_pick')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
         integer(8) function terminal_pick_color(x_pos, y_pos, index) bind(C, name='terminal_pick_color')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
         integer(8) function terminal_pick_bkcolor(x_pos, y_pos, index) bind(C, name='terminal_pick_bkcolor')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: x_pos, y_pos, index
         end function
 
@@ -273,11 +290,13 @@ module BearLibTerminal
 
         subroutine terminal_delay(period) bind(C, name='terminal_delay')
             use iso_c_binding
+            implicit none
             integer (c_int), value :: period
         end subroutine
 
         integer(8) function color_from_name(name) bind(C, name='color_from_name8')
             use iso_c_binding
+            implicit none
             character (c_char), intent(in) :: name
         end function
 
@@ -289,10 +308,18 @@ contains
     ! for you by trimming & appening null, use terminal_print_ext instead.
     subroutine terminal_print(x_pos, y_pos, strn)
         use iso_c_binding
+        implicit none
         integer(c_int), value :: x_pos, y_pos
         character*(*), intent(in) :: strn
         integer(c_int) :: ret_width = 0, ret_height = 0
         call terminal_print_ext(x_pos, y_pos, 0, 0, TK_ALIGN_DEFAULT, TRIM(strn)//CHAR(0), ret_width, ret_height)
+    end subroutine
+
+    subroutine terminal_set(setting)
+        use iso_c_binding
+        implicit none
+        character*(*), intent(in) :: setting
+        call terminal_set_raw(setting//CHAR(0))
     end subroutine
 
     ! This overloads BLT's color_from_argb,
